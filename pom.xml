@@ -38,7 +38,7 @@
 			<dependency>
 				<groupId>org.jboss.arquillian</groupId>
 				<artifactId>arquillian-bom</artifactId>
-				<version>1.1.5.Final</version>
+				<version>1.1.7.Final</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
@@ -102,13 +102,45 @@
 			<artifactId>wildfly-arquillian-container-remote</artifactId>
 			<version>1.0.0.Alpha4</version>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>sun.jdk</groupId>
+					<artifactId>jconsole</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
-		
+		<dependency>
+			<groupId>org.jboss.shrinkwrap.resolver</groupId>
+			<artifactId>shrinkwrap-resolver-depchain</artifactId>
+			<scope>test</scope>
+			<type>pom</type>
+		</dependency>
+		<dependency>
+			<groupId>com.ninja-squad</groupId>
+			<artifactId>DbSetup</artifactId>
+			<version>1.3.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.25</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<finalName>${project.artifactId}</finalName>
 		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.2</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
 			<plugin>
 				<artifactId>maven-war-plugin</artifactId>
 				<version>${version.war.plugin}</version>
@@ -117,16 +149,30 @@
 				</configuration>
 			</plugin>
 			<plugin>
-			<groupId>com.googlecode.flyway</groupId>
-			<artifactId>flyway-maven-plugin</artifactId>
-			<version>3.1</version>
-			<configuration>
-				<url>${connection.url}</url>
-				<user>${connection.username}</user>
-				<password>${connection.password}</password>
-				<initVersion>0.0.1</initVersion>
-			</configuration>
-		</plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.17</version>
+			</plugin>
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<url>jdbc:mysql://localhost:3306/dbsetup</url>
+					<user>root</user>
+					<password>padrao</password>
+				</configuration>
+			</plugin>
 		</plugins>
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+			</testResource>
+			<testResource>
+				<directory>src/main/webapp</directory>
+			</testResource>
+			<testResource>
+				<directory>src/main/resources</directory>
+			</testResource>
+		</testResources>
 	</build>
 </project>
