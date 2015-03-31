@@ -10,8 +10,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 
-import org.hibernate.StatelessSession;
-import org.hibernate.jpa.HibernateEntityManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -24,6 +22,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.mysema.query.jpa.impl.JPAQuery;
+import com.mysema.query.types.Predicate;
+import com.mysema.query.types.expr.BooleanExpression;
 import com.ninja_squad.dbsetup.DbSetup;
 import com.ninja_squad.dbsetup.DbSetupTracker;
 import com.ninja_squad.dbsetup.Operations;
@@ -42,7 +42,7 @@ public class BookTest {
 	private EntityManager em;
 
 	private static DbSetupTracker dbSetupTracker = new DbSetupTracker();
-	
+
 	@Inject
 	private BookRepository bookRepo;
 
@@ -119,25 +119,28 @@ public class BookTest {
 
 	@Test
 	public void findAllQueryDSL() {
-		dbSetupTracker.skipNextLaunch();
-
-		Insert.Builder data = Operations.insertInto("BOOK").withGeneratedValue("ID", ValueGenerators.sequence().startingAt(1000L).incrementingBy(10))
-				.withGeneratedValue("name", ValueGenerators.stringSequence("bk")).columns("publication_date");
-		for (int i = 0; i < 10; i++) {
-			// deve haver uma chamada de values para cada valor q se quer
-			// inserir
-			data.values("2015-03-05");
-		}
-
-		Insert all = data.build();
-
-		DbSetup dbSetup = new DbSetup(new DataSourceDestination(dataSource), all);
-		dbSetup.launch();
 
 		JPAQuery query = new JPAQuery(em);
 
-		StatelessSession ss = em.unwrap(StatelessSession.class);
+		QBook book = QBook.book;
 
+		BooleanExpression titleContains = book.name.like("bk");
+		BooleanExpression idLessThan = book.id.lt(1030);
+
+		List<Book> allBooks = query.from(book).where(titleContains.and(idLessThan)).list(book);
+
+		assertEquals(2, allBooks.size());
 	}
 
+	@Test
+	public void findAllDeltaspikedata() {
+		QBook book = QBook.book;
+		
+		BooleanExpression titleContains = book.name.like("b%");
+		BooleanExpression ideq = book.id.eq(2l);
+		
+		List<Book> allBooks = bookRepo.jpaQuery().from(book).where(titleContains.and(ideq)).list(book);
+		
+		assertEquals(1, allBooks);
+	}
 }
